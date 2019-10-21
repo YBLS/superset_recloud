@@ -40,6 +40,9 @@ def upgrade():
         sa.Column("welcome_dashboard_id", sa.Integer(), nullable=True),
         sa.Column("created_by_fk", sa.Integer(), nullable=True),
         sa.Column("changed_by_fk", sa.Integer(), nullable=True),
+
+        sa.Column("tenant_code", sa.String(256), nullable=True),
+
         sa.ForeignKeyConstraint(["changed_by_fk"], ["ab_user.id"]),
         sa.ForeignKeyConstraint(["created_by_fk"], ["ab_user.id"]),
         sa.ForeignKeyConstraint(["user_id"], ["ab_user.id"]),

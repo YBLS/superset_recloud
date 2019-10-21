@@ -31,10 +31,11 @@ import sys
 
 from celery.schedules import crontab
 from dateutil import tz
-from flask_appbuilder.security.manager import AUTH_DB
+from flask_appbuilder.security.manager import AUTH_DB, AUTH_OAUTH
 
 from superset.stats_logger import DummyStatsLogger
 from superset.utils.logging_configurator import DefaultLoggingConfigurator
+from superset.custom_sso_security_manager import CustomSsoSecurityManager
 
 # Realtime stats logger, a StatsD implementation exists
 STATS_LOGGER = DummyStatsLogger()
@@ -88,7 +89,8 @@ SUPERSET_WEBSERVER_TIMEOUT = 60
 
 SUPERSET_DASHBOARD_POSITION_DATA_LIMIT = 65535
 EMAIL_NOTIFICATIONS = False
-CUSTOM_SECURITY_MANAGER = None
+#CUSTOM_SECURITY_MANAGER = None
+CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 # ---------------------------------------------------------
 
@@ -116,7 +118,7 @@ QUERY_SEARCH_LIMIT = 1000
 WTF_CSRF_ENABLED = True
 
 # Add endpoints that need to be exempt from CSRF protection
-WTF_CSRF_EXEMPT_LIST = ["superset.views.core.log"]
+WTF_CSRF_EXEMPT_LIST = ["localhost","superset.views.core.log"]
 
 # Whether to run the web server in debug mode or not
 DEBUG = os.environ.get("FLASK_ENV") == "development"
@@ -129,7 +131,7 @@ SHOW_STACKTRACE = True
 
 # Use all X-Forwarded headers when ENABLE_PROXY_FIX is True.
 # When proxying to a different port, set "x_port" to 0 to avoid downstream issues.
-ENABLE_PROXY_FIX = False
+ENABLE_PROXY_FIX = True
 PROXY_FIX_CONFIG = {"x_for": 1, "x_proto": 1, "x_host": 1, "x_port": 1, "x_prefix": 1}
 
 # ------------------------------
@@ -166,6 +168,107 @@ DRUID_ANALYSIS_TYPES = ["cardinality"]
 # AUTH_LDAP : Is for LDAP
 # AUTH_REMOTE_USER : Is for using REMOTE_USER from web server
 AUTH_TYPE = AUTH_DB
+#AUTH_TYPE = AUTH_OAUTH
+
+AUTO_AUTH = True
+
+MULTI_TENANT = True
+TENANT_DATABASE_ALIAS = "tenant_"
+
+OAUTH_PROVIDERS = [
+    # {
+    #     "name": "google",
+    #     "icon": "fa-google",
+    #     "token_key": "access_token",
+    #     "remote_app": {
+    #         "consumer_key": '923284233221-i83r6vj0gsl8klsn5ad0cho73bo61q7m.apps.googleusercontent.com',
+    #         "consumer_secret": 'C033_wIGeeKODIo2D-WCPTFy',
+    #         "base_url": "https://www.googleapis.com/oauth2/v2/",
+    #         "request_token_params": {"scope": "email profile"},
+    #         "request_token_url": None,
+    #         "access_token_url": "https://accounts.google.com/o/oauth2/token",
+    #         "authorize_url": "https://accounts.google.com/o/oauth2/auth",
+    #     },
+    # },
+    {
+        "name": "crm_dev1",
+        "icon": "icon-recloud",
+        "token_key": "access_token",
+        "remote_app": {
+            "consumer_key": '803a6794-efa6-47d4-b12c-f6fc0f6523ae',
+            "consumer_secret": '41f8db09-5ab6-413e-9848-5522276e0c47',
+            "base_url": "https://ssodev.recloud.com.cn:8080/auth/realms/crm_dev1/protocol/openid-connect/",
+            "request_token_params": {"scope": "email profile"},
+            "request_token_url": None,
+            "access_token_url": "https://ssodev.recloud.com.cn:8080/auth/realms/crm_dev1/protocol/openid-connect/token",
+            "authorize_url": "https://ssodev.recloud.com.cn:8080/auth/realms/crm_dev1/protocol/openid-connect/auth",
+            # "expires_in":30
+        },
+    },
+    {
+        "name": "superset",
+        "icon": "icon-recloud",
+        "token_key": "access_token",
+        "remote_app": {
+            "consumer_key": 'reportClient',
+            "consumer_secret": 'f5b5bc91-6140-4515-bc6e-61317a5ebf97',
+            "base_url": "https://ssodev.recloud.com.cn:8080/auth/realms/superset/protocol/openid-connect/",
+            "request_token_params": {"scope": "email profile"},
+            "request_token_url": None,
+            "access_token_url": "https://ssodev.recloud.com.cn:8080/auth/realms/superset/protocol/openid-connect/token",
+            "authorize_url": "https://ssodev.recloud.com.cn:8080/auth/realms/superset/protocol/openid-connect/auth",
+        },
+    },
+    {
+        "name": "crm_dev1030",
+        "icon": "icon-recloud",
+        "token_key": "access_token",
+        "remote_app": {
+            "consumer_key": 'd6e6214b-aa61-462c-b2e2-ef0310c09e51',
+            "consumer_secret": 'bc4fea67-59a3-4663-a751-efe9d85f0525',
+            "base_url": "https://ssodev.recloud.com.cn:8080/auth/realms/crm_dev1030/protocol/openid-connect/",
+            "request_token_params": {"scope": "email profile"},
+            "request_token_url": None,
+            "access_token_url": "https://ssodev.recloud.com.cn:8080/auth/realms/crm_dev1030/protocol/openid-connect/token",
+            "authorize_url": "https://ssodev.recloud.com.cn:8080/auth/realms/crm_dev1030/protocol/openid-connect/auth",
+        },
+    },
+    # {
+    #     "name": "recloud_dev1",
+    #     "icon": "icon-recloud",
+    #     "token_key": "access_token",
+    #     "remote_app": {
+    #         "consumer_key": '803a6794-efa6-47d4-b12c-f6fc0f6523ae',
+    #         "consumer_secret": '41f8db09-5ab6-413e-9848-5522276e0c47',
+    #         "base_url": "https://ssodev.recloud.com.cn:8080/auth/realms/{0}/protocol/openid-connect/",
+    #         "request_token_params": {"scope": "email profile"},
+    #         "request_token_url": None,
+    #         "access_token_url": "https://ssodev.recloud.com.cn:8080/auth/realms/{0}/protocol/openid-connect/token",
+    #         "authorize_url": "https://ssodev.recloud.com.cn:8080/auth/realms/{0}/protocol/openid-connect/auth",
+    #         # "expires_in":30
+    #     },
+    # },
+    
+    # {
+    #     "name": "github",
+    #     "icon": "fa-github",
+    #     # 'whitelist': [],
+    #     "token_key": "access_token",
+    #     "remote_app": {
+    #         "consumer_key": 'f395117b0f7247cdd9d1',
+    #         "consumer_secret": '1d1449be77bdddce8339c2016784b72c2232c9c6',
+    #         "base_url": "https://api.github.com/",
+    #         "request_token_params": {"scope": "email profile"},
+    #         # "request_token_url": None,
+    #         "access_token_url": "https://github.com/login/oauth/access_token",
+    #         "authorize_url": "https://github.com/login/oauth/authorize",
+    #     }
+    # }
+]
+
+
+#请求处理SQL的Api
+#CUSTOM_DECORATOR_SQLTRANSFORM_URL = 'http://192.168.6.209:61030/api/superset/getfiltersql'
 
 # Uncomment to setup Full admin role name
 # AUTH_ROLE_ADMIN = 'Admin'
@@ -174,9 +277,10 @@ AUTH_TYPE = AUTH_DB
 # AUTH_ROLE_PUBLIC = 'Public'
 
 # Will allow user self registration
-# AUTH_USER_REGISTRATION = True
+AUTH_USER_REGISTRATION = True
 
 # The default user self registration role
+AUTH_USER_REGISTRATION_ROLE = "Admin"
 # AUTH_USER_REGISTRATION_ROLE = "Public"
 
 # When using LDAP Auth, setup the ldap server
@@ -266,7 +370,7 @@ CACHE_CONFIG = {"CACHE_TYPE": "null"}
 TABLE_NAMES_CACHE_CONFIG = {"CACHE_TYPE": "null"}
 
 # CORS Options
-ENABLE_CORS = False
+ENABLE_CORS = True
 CORS_OPTIONS = {}
 
 # Chrome allows up to 6 open connections per domain at a time. When there are more
@@ -275,6 +379,7 @@ CORS_OPTIONS = {}
 # and this feature will be enabled by configuration only (by default Superset
 # doesn't allow cross-domain request).
 SUPERSET_WEBSERVER_DOMAINS = None
+#SUPERSET_WEBSERVER_DOMAINS = ['localhost']
 
 # Allowed format types for upload on Database view
 # TODO: Add processing of other spreadsheet formats (xls, xlsx etc)
@@ -437,6 +542,9 @@ CELERY_CONFIG = CeleryConfig
 # Additional static HTTP headers to be served by your Superset server. Note
 # Flask-Talisman aplies the relevant security HTTP headers.
 HTTP_HEADERS = {}
+#HTTP_HEADERS = {'X-Frame-Options': 'ALLOW-FROM http://localhost,http://myweb.com','Content-Security-Policy': "frame-src 'self'"}
+#HTTP_HEADERS = {'P3P':'CP=CURa ADMa DEVa PSAo PSDo OUR BUS UNI PUR INT DEM STA PRE COM NAV OTC NOI DSP COR','X-Frame-Options': 'ALLOW-FROM http://myweb.com,https://ssodev.recloud.com.cn:8080','Content-Security-Policy': "frame-src 'self'"}
+#HTTP_HEADERS = {'Content-Security-Policy': 'frame-ancestors http://localhost'}
 
 # The db id here results in selecting this one as a default in SQL Lab
 DEFAULT_DB_ID = None
@@ -663,7 +771,7 @@ TALISMAN_CONFIG = {
 #
 SESSION_COOKIE_HTTPONLY = True  # Prevent cookie from being read by frontend JS?
 SESSION_COOKIE_SECURE = False  # Prevent cookie from being transmitted over non-tls?
-SESSION_COOKIE_SAMESITE = "Lax"  # One of [None, 'Lax', 'Strict']
+SESSION_COOKIE_SAMESITE = None  # One of [None, 'Lax', 'Strict']
 
 # URI to database storing the example data, points to
 # SQLALCHEMY_DATABASE_URI by default if set to `None`

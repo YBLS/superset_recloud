@@ -110,6 +110,8 @@ from .utils import (
     get_viz,
 )
 
+from superset.custom_decorator import transform_sql
+
 
 config = app.config
 CACHE_DEFAULT_TIMEOUT = config.get("CACHE_DEFAULT_TIMEOUT", 0)
@@ -2677,6 +2679,7 @@ class Superset(BaseSupersetView):
     @has_access_api
     @expose("/sql_json/", methods=["POST"])
     @event_logger.log_this
+    #@transform_sql
     def sql_json(self):
         """Runs arbitrary sql and returns data as json"""
         # Collect Values

@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from flask_appbuilder import Model
-from sqlalchemy import Column, ForeignKey, Integer
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from superset import security_manager
@@ -42,3 +42,6 @@ class UserAttribute(Model, AuditMixinNullable):
 
     welcome_dashboard_id = Column(Integer, ForeignKey("dashboards.id"))
     welcome_dashboard = relationship("Dashboard")
+
+    #custom attributes
+    tenant_code = Column(String(32))

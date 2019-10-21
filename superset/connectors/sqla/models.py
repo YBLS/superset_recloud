@@ -21,7 +21,7 @@ import logging
 import re
 from typing import Any, Dict, List, NamedTuple, Optional, Union
 
-from flask import escape, Markup
+from flask import escape, Markup,g
 from flask_appbuilder import Model
 from flask_babel import lazy_gettext as _
 import pandas as pd
@@ -55,9 +55,11 @@ from superset.db_engine_specs.base import TimestampExpression
 from superset.exceptions import DatabaseNotFound
 from superset.jinja_context import get_template_processor
 from superset.models.annotations import Annotation
-from superset.models.core import Database
+from superset.models.core import Database, UserAttribute
 from superset.models.helpers import QueryResult
 from superset.utils import core as utils, import_datasource
+
+from superset.custom_decorator import handleSqlTransform
 
 config = app.config
 metadata = Model.metadata  # pylint: disable=no-member
@@ -316,6 +318,12 @@ class SqlaTable(Model, BaseDatasource):
         backref=backref("tables", cascade="all, delete-orphan"),
         foreign_keys=[database_id],
     )
+
+    @property
+    def customdatabase(self) -> Database:
+        return db.session.query(Database).first()
+
+
     schema = Column(String(255))
     sql = Column(Text)
     is_sqllab_view = Column(Boolean, default=False)
@@ -555,6 +563,10 @@ class SqlaTable(Model, BaseDatasource):
         sqlaq = self.get_sqla_query(**query_obj)
         sql = self.database.compile_sqla_query(sqlaq.sqla_query)
         logging.info(sql)
+        
+        #自定义处理sql
+        #sql = handleSqlTransform(sql)
+
         sql = sqlparse.format(sql, reindent=True)
         sql = self.mutate_query_from_config(sql)
         return QueryStringExtended(
@@ -942,7 +954,23 @@ class SqlaTable(Model, BaseDatasource):
             return df
 
         try:
-            df = self.database.get_df(sql, self.schema, mutator)
+            # df = self.database.get_df(sql, self.schema, mutator)
+            database = self.database
+            #get need mutil_tenant
+            mutil_tenant = app.config.get("MULTI_TENANT")
+            if mutil_tenant:
+                # get tenant_code
+                user_attribute = db.session.query(UserAttribute).filter_by(user_id = g.user.id).first()
+                if user_attribute is not None:
+                    # get database by tenant_code
+                    tenant_code = user_attribute.tenant_code
+                    tenant_alias = app.config.get("TENANT_DATABASE_ALIAS", "")
+                    #search database
+                    tenant_database = db.session.query(Database).filter_by(database_name = "{0}{1}".format(tenant_alias,tenant_code)).first()
+                    if tenant_database is not None:
+                        database = tenant_database
+
+            df = database.get_df(sql, self.schema, mutator)
         except Exception as e:
             df = None
             status = utils.QueryStatus.FAILED

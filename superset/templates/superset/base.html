@@ -24,6 +24,7 @@
     {% for entry in get_unloaded_chunks(css_manifest('theme'), loaded_chunks) %}
       <link rel="stylesheet" type="text/css" href="{{ entry }}" />
     {% endfor %}
+    <link rel="stylesheet" type="text/css" href="/static/assets/stylesheets/icomoon/style.css">
   {% endblock %}
 
   {% block head_js %}
